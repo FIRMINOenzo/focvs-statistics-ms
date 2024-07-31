@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model PerformedWorkout {
+  id           String   @id @default(uuid())
+  userId       String
+  name         String   @db.VarChar(255)
+  spentMinutes Int
+  date         DateTime
+
+  PerformedExercise PerformedExercise[]
+}
+
+model PerformedExercise {
+  id                 String  @id @default(uuid())
+  performedWorkoutId String
+  exerciseId         String
+  reps               Int
+  weight             Float
+  hasImprovements    Boolean
+
+  performedWorkout PerformedWorkout @relation(fields: [performedWorkoutId], references: [id])
+}
