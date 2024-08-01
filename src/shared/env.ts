@@ -10,6 +10,10 @@ function getEnv() {
       version: process.env.APP_VERSION,
       port: Number.parseInt(process.env.PORT)
     },
+    redis: {
+      host: process.env.REDIS_HOST,
+      port: Number.parseInt(process.env.REDIS_PORT)
+    },
     isProduction(): boolean {
       return env.app.env !== 'local' && env.app.env !== 'development' && env.app.env !== 'homolog';
     }
