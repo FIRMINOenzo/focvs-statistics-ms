@@ -14,7 +14,7 @@ model PerformedWorkout {
   spentMinutes Int
   date         DateTime
 
-  PerformedExercise PerformedExercise[]
+  PerformedExercises PerformedExercise[]
 }
 
 model PerformedExercise {
