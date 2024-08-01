@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateWorkoutDto } from './dto/create-workout.dto';
 import { UpdateWorkoutDto } from './dto/update-workout.dto';
+import { a } from './commands/create-performed-workout/create-performed-workout.dto';
 
 @Injectable()
 export class WorkoutsService {
@@ -9,7 +10,8 @@ export class WorkoutsService {
   }
 
   findAll() {
-    return `This action returns all workouts`;
+    const b = new a();
+    return 'This action returns all workouts';
   }
 
   findOne(id: number) {
