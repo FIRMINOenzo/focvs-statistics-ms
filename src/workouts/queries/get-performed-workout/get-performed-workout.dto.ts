@@ -1,4 +1,4 @@
-import { MinPerformedExercise } from './../../types/min-performed-exercise.type';
+import { MinPerformedExercise } from '../../types/min-performed-exercise.type';
 import { Exclude, Expose, Type } from 'class-transformer';
 
 @Exclude()

@@ -9,6 +9,9 @@ export class MinPerformedExercise {
   exerciseId: string;
 
   @Expose()
+  setPosition: number;
+
+  @Expose()
   reps: number;
 
   @Expose()

@@ -1,5 +1,4 @@
-import { PerformedWorkout } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
-export class a {
-  a: PerformedWorkout;
-}
+export interface CreatePerformedWorkoutDto
+  extends Prisma.PerformedWorkoutGetPayload<unknown> {}

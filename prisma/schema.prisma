@@ -12,7 +12,7 @@ model PerformedWorkout {
   userId       String
   name         String   @db.VarChar(255)
   spentMinutes Int
-  date         DateTime
+  date         DateTime @default(now())
 
   PerformedExercises PerformedExercise[]
 }
@@ -21,6 +21,7 @@ model PerformedExercise {
   id                 String  @id @default(uuid())
   performedWorkoutId String
   exerciseId         String
+  setPosition        Int
   reps               Int
   weight             Float
   hasImprovements    Boolean

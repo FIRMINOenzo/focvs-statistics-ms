@@ -4,6 +4,7 @@ import { PerformedWorkoutDto } from './get-performed-workout.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { MinPerformedExercise } from 'src/workouts/types/min-performed-exercise.type';
 import { PerformedExercise, PerformedWorkout } from '@prisma/client';
+import { plainToClass } from 'class-transformer';
 
 type PrismaQueryType = {
   PerformedExercises: PerformedExercise[];
@@ -15,11 +16,13 @@ export class GetPerformedWorkoutHandler
 {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async execute(query: GetPerformedWorkoutQuery): Promise<PerformedWorkoutDto | null> {
+  async execute(
+    query: GetPerformedWorkoutQuery
+  ): Promise<PerformedWorkoutDto | null> {
     try {
       const data = await this.prismaService.performedWorkout.findUniqueOrThrow({
         where: { id: query.id },
-        include: { PerformedExercises: true }
+        include: { PerformedExercises: true },
       });
 
       return this.performedWorkoutToDto(data);
@@ -29,24 +32,15 @@ export class GetPerformedWorkoutHandler
   }
 
   private performedWorkoutToDto(data: PrismaQueryType): PerformedWorkoutDto {
-    const performedWorkoutDto = new PerformedWorkoutDto();
-    performedWorkoutDto.id = data.id;
-    performedWorkoutDto.userId = data.userId;
-    performedWorkoutDto.name = data.name;
-    performedWorkoutDto.spentMinutes = data.spentMinutes;
-    performedWorkoutDto.date = data.date;
-
-    performedWorkoutDto.exercises = data.PerformedExercises.map((performedExercise) => {
-      const minPerformedExercise = new MinPerformedExercise();
-      minPerformedExercise.id = performedExercise.id;
-      minPerformedExercise.exerciseId = performedExercise.exerciseId;
-      minPerformedExercise.weight = performedExercise.weight;
-      minPerformedExercise.reps = performedExercise.reps;
-      minPerformedExercise.hasImprovements = performedExercise.hasImprovements;
-
-      return minPerformedExercise;
+    const exercises = data.PerformedExercises.map((performedExercise) => {
+      return plainToClass(MinPerformedExercise, {
+        ...performedExercise,
+      });
     });
 
-    return performedWorkoutDto;
+    return plainToClass(PerformedWorkoutDto, {
+      ...data,
+      exercises,
+    });
   }
 }
