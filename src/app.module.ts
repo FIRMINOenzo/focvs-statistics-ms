@@ -7,9 +7,15 @@ import {
   FocvsSharedStuffModule,
   JwtService,
 } from '@PedroCavallaro/focvs-utils';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [FocvsSharedStuffModule, WorkoutsModule, StatisticsModule],
+  imports: [
+    FocvsSharedStuffModule,
+    ConfigModule.forRoot(),
+    WorkoutsModule,
+    StatisticsModule,
+  ],
   controllers: [],
   providers: [
     {
