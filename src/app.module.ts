@@ -8,6 +8,8 @@ import {
   JwtService,
 } from '@PedroCavallaro/focvs-utils';
 import { ConfigModule } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { env } from './shared/env';
 
 @Module({
   imports: [
@@ -15,6 +17,16 @@ import { ConfigModule } from '@nestjs/config';
     ConfigModule.forRoot(),
     WorkoutsModule,
     StatisticsModule,
+    ClientsModule.register([
+      {
+        name: 'WORKOUTS_SERVICE',
+        transport: Transport.REDIS,
+        options: {
+          host: env.redis.host,
+          port: env.redis.port,
+        },
+      },
+    ]),
   ],
   controllers: [],
   providers: [
