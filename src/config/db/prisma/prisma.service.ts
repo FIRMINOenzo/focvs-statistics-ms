@@ -1,14 +1,11 @@
 import { Global, HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import {
-  PrismaClientInitializationError,
-  PrismaClientKnownRequestError,
-  PrismaClientRustPanicError,
-  PrismaClientUnknownRequestError,
-  PrismaClientValidationError,
+  DefaultArgs,
+  DynamicQueryExtensionArgs,
 } from '@prisma/client/runtime/library';
 import { PrismaError } from 'prisma-error-enum';
-import { AppError } from 'src/domain/shared/error/app-error';
+import { AppError } from '@PedroCavallaro/focvs-utils';
 
 @Global()
 @Injectable()
@@ -17,6 +14,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   async onModuleInit() {
     await this.$connect();
+
     this.subscribe({
       async $allOperations({ args, query }) {
         return query(args);
@@ -24,30 +22,41 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  public subscribe(model: PrismaClient) {
+  public subscribe(
+    model: DynamicQueryExtensionArgs<
+      {
+        [K in
+          | Prisma.TypeMap['meta']['modelProps']
+          | '$allModels'
+          | keyof Prisma.TypeMap['other']['operations']
+          | '$allOperations']?: unknown;
+      },
+      Prisma.TypeMap<DefaultArgs>
+    >,
+  ) {
     Object.assign(this, this.$extends({ query: model }));
   }
 
   public static isKnownError(
     exception: unknown,
-  ): exception is PrismaClientKnownRequestError {
-    return exception instanceof PrismaClientKnownRequestError;
+  ): exception is Prisma.PrismaClientKnownRequestError {
+    return exception instanceof Prisma.PrismaClientKnownRequestError;
   }
 
   public static isPrismaError(
     exception: unknown,
   ): exception is
-    | PrismaClientKnownRequestError
-    | PrismaClientRustPanicError
-    | PrismaClientInitializationError
-    | PrismaClientUnknownRequestError
-    | PrismaClientValidationError {
+    | Prisma.PrismaClientKnownRequestError
+    | Prisma.PrismaClientRustPanicError
+    | Prisma.PrismaClientInitializationError
+    | Prisma.PrismaClientUnknownRequestError
+    | Prisma.PrismaClientValidationError {
     return (
-      exception instanceof PrismaClientKnownRequestError ||
-      exception instanceof PrismaClientRustPanicError ||
-      exception instanceof PrismaClientInitializationError ||
-      exception instanceof PrismaClientUnknownRequestError ||
-      exception instanceof PrismaClientValidationError
+      exception instanceof Prisma.PrismaClientKnownRequestError ||
+      exception instanceof Prisma.PrismaClientRustPanicError ||
+      exception instanceof Prisma.PrismaClientInitializationError ||
+      exception instanceof Prisma.PrismaClientUnknownRequestError ||
+      exception instanceof Prisma.PrismaClientValidationError
     );
   }
 

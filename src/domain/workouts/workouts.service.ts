@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateExerciseDto, CreateWorkoutDto } from './dto/create-workout.dto';
-import { PrismaService } from '../config/db/prisma/prisma.service';
+import { PrismaService } from '../../config/db/prisma/prisma.service';
+import { PerformedWorkout } from '@prisma/client';
 
 @Injectable()
 export class WorkoutsService {
@@ -41,12 +42,26 @@ export class WorkoutsService {
     }
   }
 
-  findAll() {
-    return `This action returns all workouts`;
+  async findAll(userId: string): Promise<PerformedWorkout[] | null> {
+    try {
+      return await this.prismaService.performedWorkout.findMany({
+        where: { userId },
+      });
+    } catch (error) {
+      console.log(error);
+      return;
+    }
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} workout`;
+  async findOne(userId: string, id: string): Promise<PerformedWorkout | null> {
+    try {
+      return await this.prismaService.performedWorkout.findFirst({
+        where: { userId, id },
+      });
+    } catch (error) {
+      console.log(error);
+      return;
+    }
   }
 
   private async upsertExercisePr(
