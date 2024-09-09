@@ -1,34 +1,80 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  InternalServerErrorException,
+  Query,
+} from '@nestjs/common';
 import { StatisticsService } from './statistics.service';
-import { CreateStatisticDto } from './dto/create-statistic.dto';
-import { UpdateStatisticDto } from './dto/update-statistic.dto';
+import { AuthUser } from '@PedroCavallaro/focvs-utils';
+import { AuthToken } from 'src/shared/types/auth-token.type';
+import { GetWorkoutsBetweenDates } from './dto/get-workout-between-dates.dto';
 
 @Controller('statistics')
 export class StatisticsController {
-  constructor(private readonly statisticsService: StatisticsService) {}
+  constructor(private readonly service: StatisticsService) {}
 
-  @Post()
-  create(@Body() createStatisticDto: CreateStatisticDto) {
-    return this.statisticsService.create(createStatisticDto);
+  @Get('workouts-between-days')
+  async getUserWorkoutsBetweenDates(
+    @AuthUser() { id }: AuthToken,
+    @Query() q: GetWorkoutsBetweenDates,
+  ) {
+    try {
+      return await this.service.getUserWorkoutsBetweenDates(id, q.days);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - q.days);
+      throw new InternalServerErrorException(
+        `Failed to fetch workouts between ${pastDate} and ${new Date(Date.now())}.`,
+      );
+    }
   }
 
-  @Get()
-  findAll() {
-    return this.statisticsService.findAll();
+  @Get('last-workouts')
+  async getUserLastThreeWorkouts(@AuthUser() { id }: AuthToken) {
+    try {
+      return await this.service.lastThreeWorkouts(id);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      throw new InternalServerErrorException(
+        `Failed to fetch last three workouts.`,
+      );
+    }
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.statisticsService.findOne(+id);
+  @Get('hours-in-week-month')
+  async getHours(@AuthUser() { id }: AuthToken) {
+    try {
+      return await this.service.hoursInWeekAndMonth(id);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      throw new InternalServerErrorException(
+        `Failed to fetch hours in week and month.`,
+      );
+    }
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateStatisticDto: UpdateStatisticDto) {
-    return this.statisticsService.update(+id, updateStatisticDto);
+  @Get('workouts-in-week-month')
+  async getWorkoutAmount(@AuthUser() { id }: AuthToken) {
+    try {
+      return await this.service.workoutsInWeekAndMonth(id);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      throw new InternalServerErrorException(
+        `Failed to fetch workouts in week and month.`,
+      );
+    }
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.statisticsService.remove(+id);
+  @Get('last-improvements')
+  async exercisesWithImprovements(@AuthUser() { id }: AuthToken) {
+    try {
+      return await this.service.exercisesWithImprovements(id);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      throw new InternalServerErrorException(
+        `Failed to fetch last four improvements.`,
+      );
+    }
   }
 }

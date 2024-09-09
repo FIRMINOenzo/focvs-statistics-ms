@@ -1,26 +1,106 @@
 import { Injectable } from '@nestjs/common';
-import { CreateStatisticDto } from './dto/create-statistic.dto';
-import { UpdateStatisticDto } from './dto/update-statistic.dto';
+import { ExercisePr, PerformedWorkout } from '@prisma/client';
+import { startOfMonth, startOfWeek } from 'date-fns';
+import { PrismaService } from 'src/config/db/prisma/prisma.service';
+import {
+  HoursSpentDTO,
+  PerformedWorkoutsInDTO,
+} from './dto/workouts-by-time.dto';
+
+class TimeHandler {
+  public static WEEK_INIT = startOfWeek(new Date(), { weekStartsOn: 0 });
+  public static MONTH_INIT = startOfMonth(new Date());
+}
 
 @Injectable()
 export class StatisticsService {
-  create(createStatisticDto: CreateStatisticDto) {
-    return 'This action adds a new statistic';
+  constructor(private readonly prismaService: PrismaService) {}
+
+  async getUserWorkoutsBetweenDates(
+    userId: string,
+    days: number,
+  ): Promise<PerformedWorkout[]> {
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - days);
+
+    return await this.prismaService.performedWorkout.findMany({
+      where: {
+        userId,
+        performedAt: {
+          gte: pastDate,
+        },
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all statistics`;
+  async lastThreeWorkouts(userId: string): Promise<PerformedWorkout[]> {
+    return await this.prismaService.performedWorkout.findMany({
+      where: { userId },
+      orderBy: { performedAt: 'desc' },
+      take: 3,
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} statistic`;
+  async hoursInWeekAndMonth(userId: string): Promise<HoursSpentDTO> {
+    const [week, month] = await Promise.all([
+      this.findHoursWorkingOutInRange(userId, TimeHandler.WEEK_INIT),
+      this.findHoursWorkingOutInRange(userId, TimeHandler.MONTH_INIT),
+    ]);
+    return new HoursSpentDTO(week, month);
   }
 
-  update(id: number, updateStatisticDto: UpdateStatisticDto) {
-    return `This action updates a #${id} statistic`;
+  async workoutsInWeekAndMonth(
+    userId: string,
+  ): Promise<PerformedWorkoutsInDTO> {
+    const [week, month] = await Promise.all([
+      this.findWorkoutsInRange(userId, TimeHandler.WEEK_INIT),
+      this.findWorkoutsInRange(userId, TimeHandler.MONTH_INIT),
+    ]);
+
+    return new PerformedWorkoutsInDTO(week, month);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} statistic`;
+  async exercisesWithImprovements(userId: string): Promise<ExercisePr[]> {
+    return await this.prismaService.exercisePr.findMany({
+      where: { userId },
+      orderBy: { updatedAt: 'desc' },
+      take: 4,
+    });
+  }
+
+  private async findHoursWorkingOutInRange(
+    userId: string,
+    range: Date,
+  ): Promise<string> {
+    const workouts = await this.prismaService.performedWorkout.findMany({
+      where: {
+        userId,
+        performedAt: { gte: range },
+      },
+      select: { spentMinutes: true },
+    });
+    const totalHours: number = workouts.reduce(
+      (acc, workout) => acc + workout.spentMinutes,
+      0,
+    );
+    return this.formatMinutesToHoursAndMinutes(totalHours);
+  }
+
+  private async findWorkoutsInRange(
+    userId: string,
+    range: Date,
+  ): Promise<PerformedWorkout[]> {
+    return await this.prismaService.performedWorkout.findMany({
+      where: {
+        userId,
+        performedAt: { gte: range },
+      },
+    });
+  }
+
+  private formatMinutesToHoursAndMinutes(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${String(hours).padStart(2, '0')} horas, ${String(remainingMinutes).padStart(2, '0')} minutos`;
   }
 }
