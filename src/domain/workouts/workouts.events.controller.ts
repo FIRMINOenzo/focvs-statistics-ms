@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { CreateWorkoutDto } from './dto/create-workout.dto';
+import { CreateWorkoutDto } from './dto'
 import { WorkoutsService } from './workouts.service';
 import { Public } from '@PedroCavallaro/focvs-utils';
 

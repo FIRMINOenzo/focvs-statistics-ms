@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
-import { WorkoutsModule } from './domain/workouts/workouts.module';
-import { StatisticsModule } from './domain/statistics/statistics.module';
 import {
   AuthGuard,
   FocvsSharedStuffModule,
   JwtService,
 } from '@PedroCavallaro/focvs-utils';
 import { ConfigModule } from '@nestjs/config';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { env } from './shared/env';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { StatisticsModule } from './domain/statistics/statistics.module';
+import { WorkoutsModule } from './domain/workouts/workouts.module';
 
 @Module({
   imports: [

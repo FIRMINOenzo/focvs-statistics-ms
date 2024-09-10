@@ -1,16 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ExercisePr, PerformedWorkout } from '@prisma/client';
-import { startOfMonth, startOfWeek } from 'date-fns';
-import { PrismaService } from 'src/config/db/prisma/prisma.service';
 import {
   HoursSpentDTO,
   PerformedWorkoutsInDTO,
-} from './dto/workouts-by-time.dto';
+} from './dto';
+import { PrismaService } from '@/config/db';
+import { TimeHandler } from './helpers/time';
 
-class TimeHandler {
-  public static WEEK_INIT = startOfWeek(new Date(), { weekStartsOn: 0 });
-  public static MONTH_INIT = startOfMonth(new Date());
-}
 
 @Injectable()
 export class StatisticsService {
