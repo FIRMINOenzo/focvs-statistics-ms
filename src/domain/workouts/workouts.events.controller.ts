@@ -8,7 +8,7 @@ import { Public } from '@PedroCavallaro/focvs-utils';
 export class WorkoutsEventsController {
   constructor(private readonly service: WorkoutsService) {}
 
-  @MessagePattern('createWorkout')
+  @MessagePattern('create-workout')
   @Public()
   create(@Payload() createWorkoutDto: CreateWorkoutDto) {
     return this.service.create(createWorkoutDto);

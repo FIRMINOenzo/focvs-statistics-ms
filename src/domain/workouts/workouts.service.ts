@@ -11,7 +11,16 @@ export class WorkoutsService {
     const { user_id, name, performed_at, spent_minutes, exercises } =
       createWorkoutDto;
 
+
     this.prismaService.$transaction(async (prisma) => {
+     
+      const exercisesToCreate = exercises.map((exercise) => ({
+        exerciseId: exercise.exercise_id,
+        setPosition: exercise.set_position,
+        reps: exercise.reps,
+        weight: exercise.weight,
+      }))
+
       prisma.performedWorkout.create({
         data: {
           userId: user_id,
@@ -19,12 +28,7 @@ export class WorkoutsService {
           performedAt: new Date(performed_at).toISOString(),
           spentMinutes: spent_minutes,
           performed_exercises: {
-            create: exercises.map((exercise) => ({
-              exerciseId: exercise.exercise_id,
-              setPosition: exercise.set_position,
-              reps: exercise.reps,
-              weight: exercise.weight,
-            })),
+            create: exercisesToCreate,
           },
         },
         include: {
@@ -33,13 +37,9 @@ export class WorkoutsService {
       });
     });
 
-    for (const exercise of exercises) {
-      try {
-        this.upsertExercisePr(user_id, exercise);
-      } catch (error) {
-        console.error(error);
-      }
-    }
+    const promises = exercises.map((e) => this.upsertExercisePr(user_id, e)) 
+
+    return await Promise.allSettled(promises)
   }
 
   async findAll(userId: string): Promise<PerformedWorkout[] | null> {
@@ -88,6 +88,7 @@ export class WorkoutsService {
             updatedAt: new Date(Date.now()).toISOString(),
           },
         });
+        
         return;
       }
 

@@ -6,6 +6,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
@@ -34,6 +35,7 @@ export class CreateWorkoutDto {
   user_id: string;
 
   @IsString()
+  @IsOptional()
   name?: string;
 
   @IsNotEmpty()

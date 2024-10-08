@@ -7,7 +7,6 @@ import {
 import { PrismaService } from '@/config/db';
 import { TimeHandler } from './helpers/time';
 
-
 @Injectable()
 export class StatisticsService {
   constructor(private readonly prismaService: PrismaService) {}
@@ -17,6 +16,7 @@ export class StatisticsService {
     days: number,
   ): Promise<PerformedWorkout[]> {
     const pastDate = new Date();
+    
     pastDate.setDate(pastDate.getDate() - days);
 
     return await this.prismaService.performedWorkout.findMany({
@@ -42,6 +42,7 @@ export class StatisticsService {
       this.findHoursWorkingOutInRange(userId, TimeHandler.WEEK_INIT),
       this.findHoursWorkingOutInRange(userId, TimeHandler.MONTH_INIT),
     ]);
+    
     return new HoursSpentDTO(week, month);
   }
 
@@ -75,10 +76,12 @@ export class StatisticsService {
       },
       select: { spentMinutes: true },
     });
-    const totalHours: number = workouts.reduce(
+    
+    const totalHours = workouts.reduce(
       (acc, workout) => acc + workout.spentMinutes,
       0,
     );
+    
     return this.formatMinutesToHoursAndMinutes(totalHours);
   }
 
@@ -97,6 +100,7 @@ export class StatisticsService {
   private formatMinutesToHoursAndMinutes(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
+    
     return `${String(hours).padStart(2, '0')} horas, ${String(remainingMinutes).padStart(2, '0')} minutos`;
   }
 }
