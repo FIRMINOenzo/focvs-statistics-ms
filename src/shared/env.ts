@@ -8,7 +8,7 @@ function getEnv() {
       name: process.env.APP_NAME,
       description: process.env.APP_DESCRIPTION,
       version: process.env.APP_VERSION,
-      port: Number.parseInt(process.env.PORT),
+      port: Number.parseInt(process.env.PORT || '3000'),
     },
     redis: {
       host: process.env.REDIS_HOST,

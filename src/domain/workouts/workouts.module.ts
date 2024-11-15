@@ -22,5 +22,6 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
   ],
   controllers: [WorkoutsHttpController, WorkoutsEventsController],
   providers: [WorkoutsService],
+  exports: [WorkoutsService],
 })
 export class WorkoutsModule {}
