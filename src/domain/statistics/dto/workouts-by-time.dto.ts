@@ -5,7 +5,7 @@ export class HoursSpentDTO {
   @IsString()
   @IsNotEmpty()
   week: string;
-  
+
   @IsString()
   @IsNotEmpty()
   month: string;
@@ -15,6 +15,11 @@ export class HoursSpentDTO {
     this.month = month;
   }
 }
+
+type WorkoutAmountInTime = {
+  timeDescription: string;
+  amount: number;
+};
 
 export class PerformedWorkoutsInDTO {
   week: PerformedWorkout[];

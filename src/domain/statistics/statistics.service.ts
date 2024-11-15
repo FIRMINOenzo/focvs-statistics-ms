@@ -1,25 +1,35 @@
 import { Injectable } from '@nestjs/common';
 import { ExercisePr, PerformedWorkout } from '@prisma/client';
-import {
-  HoursSpentDTO,
-  PerformedWorkoutsInDTO,
-} from './dto';
+import { HoursSpentDTO, PerformedWorkoutsInDTO } from './dto';
 import { PrismaService } from '@/config/db';
 import { TimeHandler } from './helpers/time';
+import { WorkoutsService } from '../workouts';
 
 @Injectable()
 export class StatisticsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly workoutsService: WorkoutsService,
+  ) {}
+
+  async loadAllWorkouts(userId: string) {
+    const workouts = await this.workoutsService.findAll(userId);
+
+    return workouts.map((workout) => {
+      const date = new Date(workout.performedAt);
+      return date.toISOString().split('T')[0];
+    });
+  }
 
   async getUserWorkoutsBetweenDates(
     userId: string,
     days: number,
   ): Promise<PerformedWorkout[]> {
     const pastDate = new Date();
-    
+
     pastDate.setDate(pastDate.getDate() - days);
 
-    return await this.prismaService.performedWorkout.findMany({
+    const workouts = await this.prismaService.performedWorkout.findMany({
       where: {
         userId,
         performedAt: {
@@ -42,7 +52,7 @@ export class StatisticsService {
       this.findHoursWorkingOutInRange(userId, TimeHandler.WEEK_INIT),
       this.findHoursWorkingOutInRange(userId, TimeHandler.MONTH_INIT),
     ]);
-    
+
     return new HoursSpentDTO(week, month);
   }
 
@@ -76,12 +86,12 @@ export class StatisticsService {
       },
       select: { spentMinutes: true },
     });
-    
+
     const totalHours = workouts.reduce(
       (acc, workout) => acc + workout.spentMinutes,
       0,
     );
-    
+
     return this.formatMinutesToHoursAndMinutes(totalHours);
   }
 
@@ -100,7 +110,7 @@ export class StatisticsService {
   private formatMinutesToHoursAndMinutes(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
-    
+
     return `${String(hours).padStart(2, '0')} horas, ${String(remainingMinutes).padStart(2, '0')} minutos`;
   }
 }
