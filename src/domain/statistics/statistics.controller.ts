@@ -32,8 +32,7 @@ export class StatisticsController {
       return await this.service.getUserWorkoutsBetweenDates(id, q.days);
     } catch (_) {
       const pastDate = new Date();
-
-      pastDate.setDate(pastDate.getDate() - q.days);
+      pastDate.setDate(pastDate.getDate() - Number(q.days));
 
       throw new InternalServerErrorException(
         `Failed to fetch workouts between ${pastDate} and ${new Date(Date.now())}.`,
