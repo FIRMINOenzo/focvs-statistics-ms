@@ -5,6 +5,7 @@ import { PrismaService } from '@/config/db'
 import { TimeHandler } from './helpers/time'
 import { WorkoutsService } from '../workouts'
 import { MonthHandler } from '@/shared/date/month.handler'
+import { ExerciseImprovementDTO } from './dto/exercise-improvement.dto'
 
 @Injectable()
 export class StatisticsService {
@@ -73,12 +74,34 @@ export class StatisticsService {
     return { week, month }
   }
 
-  async exercisesWithImprovements(userId: string): Promise<ExercisePr[]> {
-    return await this.prismaService.exercisePr.findMany({
+  async exercisesWithImprovements(userId: string): Promise<Array<ExerciseImprovementDTO>> {
+    const latestPRs = await this.prismaService.exercisePr.findMany({
       where: { userId },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
+      distinct: ['exerciseId'],
       take: 4
-    })
+    });
+  
+    const exercisesWithProgress: ExerciseImprovementDTO[] = await Promise.all(
+      latestPRs.map(async (pr) => {
+        const oldPr = await this.prismaService.exercisePr.findFirst({
+          where: {
+            userId,
+            exerciseId: pr.exerciseId,
+            createdAt: { lt: pr.createdAt }
+          },
+          orderBy: { createdAt: 'desc' }
+        })
+
+        return {
+          exerciseId: pr.exerciseId,
+          pr: { reps: pr.reps, weight: pr.weight },
+          oldPr: { reps: oldPr.reps, weight: oldPr.weight }
+        }
+      })
+    )
+  
+    return exercisesWithProgress
   }
 
   private async findHoursWorkingOutInRange(userId: string, range: Date): Promise<string> {

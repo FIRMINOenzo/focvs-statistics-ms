@@ -34,5 +34,5 @@ model ExercisePr {
   exerciseId String   @map("exercise_id")
   reps       Int
   weight     Float
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamp()
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp()
 }
