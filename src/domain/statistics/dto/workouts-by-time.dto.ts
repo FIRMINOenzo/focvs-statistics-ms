@@ -16,11 +16,6 @@ export class HoursSpentDTO {
   }
 }
 
-type WorkoutAmountInTime = {
-  timeDescription: string;
-  amount: number;
-};
-
 export class PerformedWorkoutsInDTO {
   week: PerformedWorkout[];
   month: PerformedWorkout[];
