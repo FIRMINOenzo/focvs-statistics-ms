@@ -1,25 +1,21 @@
-import { Global, HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
-import {
-  DefaultArgs,
-  DynamicQueryExtensionArgs,
-} from '@prisma/client/runtime/library';
-import { PrismaError } from 'prisma-error-enum';
-import { AppError } from '@PedroCavallaro/focvs-utils';
+import { HttpStatus, Injectable, OnModuleInit } from '@nestjs/common'
+import { Prisma, PrismaClient } from '@prisma/client'
+import { DefaultArgs, DynamicQueryExtensionArgs } from '@prisma/client/runtime/library'
+import { PrismaError } from 'prisma-error-enum'
+import { AppError } from '@PedroCavallaro/focvs-utils'
 
-@Global()
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
-  static readonly instance = new PrismaService();
+  static readonly instance = new PrismaService()
 
   async onModuleInit() {
-    await this.$connect();
+    await this.$connect()
 
     this.subscribe({
       async $allOperations({ args, query }) {
-        return query(args);
-      },
-    });
+        return query(args)
+      }
+    })
   }
 
   public subscribe(
@@ -29,22 +25,22 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
           | Prisma.TypeMap['meta']['modelProps']
           | '$allModels'
           | keyof Prisma.TypeMap['other']['operations']
-          | '$allOperations']?: unknown;
+          | '$allOperations']?: unknown
       },
       Prisma.TypeMap<DefaultArgs>
-    >,
+    >
   ) {
-    Object.assign(this, this.$extends({ query: model }));
+    Object.assign(this, this.$extends({ query: model }))
   }
 
   public static isKnownError(
-    exception: unknown,
+    exception: unknown
   ): exception is Prisma.PrismaClientKnownRequestError {
-    return exception instanceof Prisma.PrismaClientKnownRequestError;
+    return exception instanceof Prisma.PrismaClientKnownRequestError
   }
 
   public static isPrismaError(
-    exception: unknown,
+    exception: unknown
   ): exception is
     | Prisma.PrismaClientKnownRequestError
     | Prisma.PrismaClientRustPanicError
@@ -57,32 +53,26 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       exception instanceof Prisma.PrismaClientInitializationError ||
       exception instanceof Prisma.PrismaClientUnknownRequestError ||
       exception instanceof Prisma.PrismaClientValidationError
-    );
+    )
   }
 
   public static handleError(err: unknown) {
     if (PrismaService.isKnownError(err)) {
       switch (err.code) {
         case PrismaError.UniqueConstraintViolation:
-          throw new AppError(
-            `Duplicated ${err.meta.target}.`,
-            HttpStatus.CONFLICT,
-          );
+          throw new AppError(`Duplicated ${err.meta.target}.`, HttpStatus.CONFLICT)
 
         case PrismaError.RecordsNotFound:
-          throw new AppError(
-            `${err.meta?.modelName ?? 'Record'} not found`,
-            HttpStatus.NOT_FOUND,
-          );
+          throw new AppError(`${err.meta?.modelName ?? 'Record'} not found`, HttpStatus.NOT_FOUND)
 
         case PrismaError.ForeignConstraintViolation:
           throw new AppError(
             `Constraint violation on ${err.meta?.field_name}`,
-            HttpStatus.PRECONDITION_FAILED,
-          );
+            HttpStatus.PRECONDITION_FAILED
+          )
       }
     }
 
-    throw err;
+    throw err
   }
 }

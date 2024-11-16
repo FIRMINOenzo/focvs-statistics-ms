@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Type } from 'class-transformer'
 import {
   ArrayMinSize,
   IsArray,
@@ -8,48 +8,48 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  ValidateNested,
-} from 'class-validator';
+  ValidateNested
+} from 'class-validator'
 
 export class CreateExerciseDto {
   @IsNotEmpty()
   @IsString()
-  exercise_id: string;
+  exerciseId: string
 
   @IsNotEmpty()
   @IsString()
-  set_position: number;
+  set_number: number
 
   @IsNotEmpty()
   @IsInt()
-  reps: number;
+  reps: number
 
   @IsNotEmpty()
   @IsNumber({ maxDecimalPlaces: 2 })
-  weight: number;
+  weight: number
 }
 
 export class CreateWorkoutDto {
   @IsNotEmpty()
   @IsString()
-  user_id: string;
+  userId: string
 
   @IsString()
   @IsOptional()
-  name?: string;
+  name?: string
 
   @IsNotEmpty()
   @IsDateString({ strict: true })
-  performed_at: string;
+  performedAt: string
 
   @IsNotEmpty()
   @IsInt()
-  spent_minutes: number;
+  spentMinutes: number
 
   @IsNotEmpty()
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => CreateExerciseDto)
-  exercises: CreateExerciseDto[];
+  exercises: CreateExerciseDto[]
 }

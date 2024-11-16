@@ -1,43 +1,40 @@
-import { Injectable } from '@nestjs/common';
-import { CreateExerciseDto, CreateWorkoutDto } from './dto/create-workout.dto';
-import { PerformedWorkout } from '@prisma/client';
-import { PrismaService } from '@/config/db';
+import { Injectable } from '@nestjs/common'
+import { CreateExerciseDto, CreateWorkoutDto } from './dto/create-workout.dto'
+import { PerformedWorkout } from '@prisma/client'
+import { PrismaService } from '@/config/db'
 
 @Injectable()
 export class WorkoutsService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(createWorkoutDto: CreateWorkoutDto) {
-    const { user_id, name, performed_at, spent_minutes, exercises } =
-      createWorkoutDto;
-
+    const { userId, name, performedAt, spentMinutes, exercises } = createWorkoutDto
 
     this.prismaService.$transaction(async (prisma) => {
-     
       const exercisesToCreate = exercises.map((exercise) => ({
-        exerciseId: exercise.exercise_id,
-        setPosition: exercise.set_position,
+        exerciseId: exercise.exerciseId,
+        setPosition: exercise.set_number,
         reps: exercise.reps,
-        weight: exercise.weight,
+        weight: exercise.weight
       }))
 
       prisma.performedWorkout.create({
         data: {
-          userId: user_id,
+          userId: userId,
           name: name || null,
-          performedAt: new Date(performed_at).toISOString(),
-          spentMinutes: spent_minutes,
+          performedAt: new Date(performedAt).toISOString(),
+          spentMinutes: spentMinutes,
           performed_exercises: {
-            create: exercisesToCreate,
-          },
+            create: exercisesToCreate
+          }
         },
         include: {
-          performed_exercises: true,
-        },
-      });
-    });
+          performed_exercises: true
+        }
+      })
+    })
 
-    const promises = exercises.map((e) => this.upsertExercisePr(user_id, e)) 
+    const promises = exercises.map((e) => this.upsertExercisePr(userId, e))
 
     return await Promise.allSettled(promises)
   }
@@ -45,71 +42,68 @@ export class WorkoutsService {
   async findAll(userId: string): Promise<PerformedWorkout[] | null> {
     try {
       return await this.prismaService.performedWorkout.findMany({
-        where: { userId },
-      });
+        where: { userId }
+      })
     } catch (error) {
-      console.log(error);
-      return;
+      console.log(error)
+      return
     }
   }
 
   async findOne(userId: string, id: string): Promise<PerformedWorkout | null> {
     try {
       return await this.prismaService.performedWorkout.findFirst({
-        where: { userId, id },
-      });
+        where: { userId, id }
+      })
     } catch (error) {
-      console.log(error);
-      return;
+      console.log(error)
+      return
     }
   }
 
-  private async upsertExercisePr(
-    userId: string,
-    performedExercise: CreateExerciseDto,
-  ) {
-    const { weight, reps, exercise_id } = performedExercise;
+  private async upsertExercisePr(userId: string, performedExercise: CreateExerciseDto) {
+    const { weight, reps, exerciseId } = performedExercise
 
     try {
       const existingPr = await this.prismaService.exercisePr.findFirst({
         where: {
           userId,
-          exerciseId: exercise_id,
-        },
-      });
+          exerciseId: exerciseId
+        }
+      })
 
       if (!existingPr) {
         this.prismaService.exercisePr.create({
           data: {
             userId,
-            exerciseId: exercise_id,
+            exerciseId: exerciseId,
             reps,
             weight,
-            updatedAt: new Date(Date.now()).toISOString(),
-          },
-        });
-        
-        return;
+            updatedAt: new Date(Date.now()).toISOString()
+          }
+        })
+
+        return
       }
 
       if (weight > existingPr.weight) {
-        existingPr.weight = weight;
-        existingPr.reps = reps;
+        existingPr.weight = weight
+        existingPr.reps = reps
       } else if (reps > existingPr.reps && weight === existingPr.weight) {
-        existingPr.reps = reps;
+        existingPr.reps = reps
       }
 
       this.prismaService.exercisePr.update({
         data: {
-          ...existingPr,
+          ...existingPr
         },
         where: {
-          id: existingPr.id,
-        },
-      });
+          id: existingPr.id
+        }
+      })
     } catch (error) {
-      console.error(`Failed to upsert PR for exercise ${exercise_id}:`, error);
-      throw error;
+      console.error(`Failed to upsert PR for exercise ${exerciseId}:`, error)
+      throw error
     }
   }
 }

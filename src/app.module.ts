@@ -1,18 +1,16 @@
-import { Module } from '@nestjs/common';
-import { APP_GUARD, Reflector } from '@nestjs/core';
-import {
-  AuthGuard,
-  FocvsSharedStuffModule,
-  JwtService,
-} from '@PedroCavallaro/focvs-utils';
-import { ConfigModule } from '@nestjs/config';
-import { env } from './shared/env';
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { StatisticsModule } from './domain/statistics/statistics.module';
-import { WorkoutsModule } from './domain/workouts/workouts.module';
+import { Module } from '@nestjs/common'
+import { APP_GUARD, Reflector } from '@nestjs/core'
+import { AuthGuard, FocvsSharedStuffModule, JwtService } from '@PedroCavallaro/focvs-utils'
+import { ConfigModule } from '@nestjs/config'
+import { env } from './shared/env'
+import { ClientsModule, Transport } from '@nestjs/microservices'
+import { StatisticsModule } from './domain/statistics/statistics.module'
+import { WorkoutsModule } from './domain/workouts/workouts.module'
+import { PrismaModule } from './config/db'
 
 @Module({
   imports: [
+    PrismaModule,
     FocvsSharedStuffModule,
     ConfigModule.forRoot(),
     WorkoutsModule,
@@ -23,19 +21,18 @@ import { WorkoutsModule } from './domain/workouts/workouts.module';
         transport: Transport.REDIS,
         options: {
           host: env.redis.host,
-          port: env.redis.port,
-        },
-      },
-    ]),
+          port: env.redis.port
+        }
+      }
+    ])
   ],
   controllers: [],
   providers: [
     {
       provide: APP_GUARD,
-      useFactory: (jwtService: JwtService) =>
-        new AuthGuard(jwtService, new Reflector()),
-      inject: [JwtService],
-    },
-  ],
+      useFactory: (jwtService: JwtService) => new AuthGuard(jwtService, new Reflector()),
+      inject: [JwtService]
+    }
+  ]
 })
 export class AppModule {}

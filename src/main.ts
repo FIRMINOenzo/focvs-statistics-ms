@@ -1,20 +1,22 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
-import { env } from './shared/env';
+import { NestFactory } from '@nestjs/core'
+import { AppModule } from './app.module'
+import { ValidationPipe } from '@nestjs/common'
+import { env } from './shared/env'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule)
 
-  app.useGlobalPipes(new ValidationPipe({
-    transform: true
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true
+    })
+  )
 
   app.enableCors({
     origin: true,
-    credentials: true,
-  });
+    credentials: true
+  })
 
-  await app.listen(env.app.port ?? 3000);
+  await app.listen(env.app.port ?? 8000)
 }
-bootstrap();
+bootstrap()
