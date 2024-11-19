@@ -1,6 +1,7 @@
 import { Controller, Get, InternalServerErrorException, Query } from '@nestjs/common'
 
 import { AuthUser, JwtPayloadDTO } from '@PedroCavallaro/focvs-utils'
+
 import { StatisticsService } from './statistics.service'
 import { GetWorkoutsBetweenDates } from './dto'
 
@@ -8,13 +9,14 @@ import { GetWorkoutsBetweenDates } from './dto'
 export class StatisticsController {
   constructor(private readonly service: StatisticsService) {}
 
+  @Get('evolution')
+  async getUserEvolution(@AuthUser() { id }: JwtPayloadDTO) {
+    return await this.service.getUserEvolution('user1')
+  }
+
   @Get('workouts')
   async loadAllWorkouts(@AuthUser() { id }: JwtPayloadDTO) {
-    try {
-      return await this.service.loadAllWorkouts(id)
-    } catch (_) {
-      throw new InternalServerErrorException('Failed to fetch all workouts.')
-    }
+    return await this.service.loadAllWorkouts(id)
   }
 
   @Get('workouts-between-days')
@@ -36,37 +38,21 @@ export class StatisticsController {
 
   @Get('last-workouts')
   async getUserLastThreeWorkouts(@AuthUser() { id }: JwtPayloadDTO) {
-    try {
-      return await this.service.lastThreeWorkouts(id)
-    } catch (_) {
-      throw new InternalServerErrorException('Failed to fetch last three workouts.')
-    }
+    return await this.service.lastThreeWorkouts(id)
   }
 
   @Get('hours-in-week-month')
   async getHours(@AuthUser() { id }: JwtPayloadDTO) {
-    try {
-      return await this.service.hoursInWeekAndMonth(id)
-    } catch (_) {
-      throw new InternalServerErrorException('Failed to fetch hours in week and month.')
-    }
+    return await this.service.hoursInWeekAndMonth(id)
   }
 
   @Get('workouts-in-week-month')
   async getWorkoutAmount(@AuthUser() { id }: JwtPayloadDTO) {
-    try {
-      return await this.service.workoutsInWeekAndMonth(id)
-    } catch (_) {
-      throw new InternalServerErrorException('Failed to fetch workouts in week and month.')
-    }
+    return await this.service.workoutsInWeekAndMonth(id)
   }
 
   @Get('last-improvements')
   async exercisesWithImprovements(@AuthUser() { id }: JwtPayloadDTO) {
-    try {
-      return await this.service.exercisesWithImprovements(id)
-    } catch (_) {
-      throw new InternalServerErrorException('Failed to fetch last four improvements.')
-    }
+    return await this.service.exercisesWithImprovements(id)
   }
 }

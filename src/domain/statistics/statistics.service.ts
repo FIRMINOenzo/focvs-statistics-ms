@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common'
-import { ExercisePr, PerformedWorkout } from '@prisma/client'
-import { HoursSpentDTO, PerformedWorkoutsInDTO } from './dto'
+
+import { PerformedWorkout } from '@prisma/client'
+
 import { PrismaService } from '@/config/db'
-import { TimeHandler } from './helpers/time'
-import { WorkoutsService } from '../workouts'
+
 import { MonthHandler } from '@/shared/date/month.handler'
+
+import { HoursSpentDTO, PerformedWorkoutsInDTO } from './dto'
 import { ExerciseImprovementDTO } from './dto/exercise-improvement.dto'
+import { WorkoutsService } from '../workouts'
+
+import { TimeHandler } from './helpers/time'
 
 @Injectable()
 export class StatisticsService {
@@ -80,8 +85,8 @@ export class StatisticsService {
       orderBy: { createdAt: 'desc' },
       distinct: ['exerciseId'],
       take: 4
-    });
-  
+    })
+
     const exercisesWithProgress: ExerciseImprovementDTO[] = await Promise.all(
       latestPRs.map(async (pr) => {
         const oldPr = await this.prismaService.exercisePr.findFirst({
@@ -100,8 +105,57 @@ export class StatisticsService {
         }
       })
     )
-  
+
     return exercisesWithProgress
+  }
+
+  async getUserEvolution(userId: string) {
+    try {
+      const volumeByMonth = await this.prismaService.$queryRaw<
+        Array<{ year_month: string; volume: number }>
+      >`
+        WITH MonthlyStats AS (
+        SELECT
+          TO_CHAR(pw.performed_at, 'YYYY-MM') AS year_month,
+          SUM(pe.weight * pe.reps) AS total_weight_reps,
+          COUNT(distinct pw.id) AS total_workouts
+        FROM
+          public."PerformedWorkout" pw
+        JOIN 
+          public."PerformedExercise" pe
+            ON
+          pw.id = pe.performed_workout_id
+        WHERE
+          pw.user_id = ${userId}
+        GROUP BY
+          TO_CHAR(pw.performed_at, 'YYYY-MM')
+        )
+        SELECT
+          year_month,
+          ROUND(
+            coalesce(
+              (total_weight_reps / nullif(total_workouts,0))::numeric,0),
+            2) AS volume
+        FROM
+          MonthlyStats
+        ORDER BY
+          TO_DATE(year_month, 'YYYY-MM');
+      `
+
+      if (volumeByMonth?.length < 1) {
+        return []
+      }
+
+      return volumeByMonth.map((data) => {
+        const [year, month] = data.year_month.split('-')
+        return {
+          label: `${MonthHandler.instance.getMonth(Number(month))} ${year}`,
+          volume: data.volume
+        }
+      })
+    } catch (_) {
+      return []
+    }
   }
 
   private async findHoursWorkingOutInRange(userId: string, range: Date): Promise<string> {
