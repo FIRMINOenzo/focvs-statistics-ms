@@ -18,14 +18,14 @@ model PerformedWorkout {
 }
 
 model PerformedExercise {
-  id                 String @id @default(uuid())
-  exerciseId         String @map("exercise_id")
-  performedWorkoutId String @map("performed_workout_id")
-  setPosition        Int    @map("set_position")
+  id                 String           @id @default(uuid())
+  exerciseId         String           @map("exercise_id")
+  performedWorkoutId String           @map("performed_workout_id")
+  setNumber          Int              @map("set_number")
   reps               Int
   weight             Float
-
-  performedWorkout PerformedWorkout @relation(fields: [performedWorkoutId], references: [id])
+  done               Boolean          @default(false)
+  performedWorkout   PerformedWorkout @relation(fields: [performedWorkoutId], references: [id])
 }
 
 model ExercisePr {

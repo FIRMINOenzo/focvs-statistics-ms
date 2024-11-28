@@ -1,7 +1,5 @@
 import { Controller, Get, InternalServerErrorException, Query } from '@nestjs/common'
-
 import { AuthUser, JwtPayloadDTO } from '@PedroCavallaro/focvs-utils'
-
 import { StatisticsService } from './statistics.service'
 import { GetWorkoutsBetweenDates } from './dto'
 
@@ -11,7 +9,7 @@ export class StatisticsController {
 
   @Get('evolution')
   async getUserEvolution(@AuthUser() { id }: JwtPayloadDTO) {
-    return await this.service.getUserEvolution('user1')
+    return await this.service.getUserEvolution(id)
   }
 
   @Get('workouts')

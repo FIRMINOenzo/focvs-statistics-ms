@@ -1,28 +1,28 @@
 import { Injectable } from '@nestjs/common'
-import { CreateExerciseDto, CreateWorkoutDto } from './dto/create-workout.dto'
 import { ExercisePr, PerformedWorkout } from '@prisma/client'
 import { PrismaService } from '@/config/db'
+import { PerformedExercise, PerformedSet, SavePerformedWorkoutDTO } from './dto'
 
 @Injectable()
 export class WorkoutsService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create(createWorkoutDto: CreateWorkoutDto) {
-    const { userId, name, performedAt, spentMinutes, exercises } = createWorkoutDto
+  async create(userId: string, savePerformedWorkout: SavePerformedWorkoutDTO) {
+    const { name, info, exercises } = savePerformedWorkout
 
+    const differenceInMilliseconds = Math.abs(info.startedAt - info.finishedAt)
+
+    const spentMinutes = differenceInMilliseconds / (1000 * 60)
+
+    console.log(savePerformedWorkout)
     this.prismaService.$transaction(async (prisma) => {
-      const exercisesToCreate = exercises.map((exercise) => ({
-        exerciseId: exercise.exerciseId,
-        setPosition: exercise.set_number,
-        reps: exercise.reps,
-        weight: exercise.weight
-      }))
+      const exercisesToCreate = this.parseWorkoutSets(savePerformedWorkout.exercises)
 
-      prisma.performedWorkout.create({
+      await prisma.performedWorkout.create({
         data: {
           userId: userId,
-          name: name || null,
-          performedAt: new Date(performedAt).toISOString(),
+          name: name,
+          performedAt: new Date(info.startedAt).toISOString(),
           spentMinutes: spentMinutes,
           performed_exercises: {
             create: exercisesToCreate
@@ -32,11 +32,37 @@ export class WorkoutsService {
           performed_exercises: true
         }
       })
+
+      const promises = []
+
+      for (const exercise of exercises) {
+        for (const set of exercise.sets) {
+          const validated = this.validateExercisePR(userId, exercise.id, set)
+
+          promises.push(validated)
+        }
+      }
+
+      return await Promise.allSettled(promises)
     })
+  }
 
-    const promises = exercises.map((e) => this.validateExercisePR(userId, e));
+  parseWorkoutSets(performedExercises: PerformedExercise[]) {
+    const setsToCreate = []
 
-    return await Promise.allSettled(promises)
+    for (const exercise of performedExercises) {
+      for (const set of exercise.sets) {
+        setsToCreate.push({
+          exerciseId: exercise.id,
+          setNumber: set.set_number,
+          reps: set.reps,
+          done: set.done,
+          weight: set.weight
+        })
+      }
+    }
+
+    return setsToCreate
   }
 
   async findAll(userId: string): Promise<PerformedWorkout[] | null> {
@@ -59,40 +85,30 @@ export class WorkoutsService {
     }
   }
 
-  private async validateExercisePR(
-    userId: string,
-    performedExercise: CreateExerciseDto,
-  ) {
-    const { weight, reps, exerciseId } = performedExercise;
+  private async validateExercisePR(userId: string, exerciseId: string, performedSet: PerformedSet) {
+    const { weight, reps } = performedSet
 
     const existingPR = await this.prismaService.exercisePr.findFirst({
-      where: { userId, exerciseId },
+      where: { userId, exerciseId }
     })
 
     if (!existingPR) {
       this.prismaService.exercisePr.create({
-        data: { userId, exerciseId, reps, weight },
+        data: { userId, exerciseId, reps, weight }
       })
       return
     }
 
     if (this.isNewPersonalRecord(existingPR, weight, reps)) {
       this.prismaService.exercisePr.create({
-        data: { userId, exerciseId, reps, weight },
+        data: { userId, exerciseId, reps, weight }
       })
     }
 
     return
   }
 
-  private isNewPersonalRecord(
-    existingPR: ExercisePr,
-    weight: number,
-    reps: number,
-  ): boolean {
-    return (
-      weight > existingPR.weight ||
-      (reps > existingPR.reps && weight === existingPR.weight)
-    )
+  private isNewPersonalRecord(existingPR: ExercisePr, weight: number, reps: number): boolean {
+    return weight > existingPR.weight || (reps > existingPR.reps && weight === existingPR.weight)
   }
 }
