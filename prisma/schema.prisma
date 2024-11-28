@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -5,6 +11,85 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Account {
+  id         String   @id @default(uuid())
+  email      String   @unique @db.VarChar(255)
+  password   String   @db.VarChar(64)
+  created_at DateTime @default(now())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([email], type: Hash)
+}
+
+model User {
+  id        String  @id @default(uuid())
+  name      String  @db.VarChar(255)
+  image_url String?
+
+  account Account[]
+  workout Workout[]
+}
+
+model Workout {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  day         Int
+  signature   String
+  picture_url String?
+  public      Boolean
+  userId      String
+  copied      Boolean? @default(false)
+
+  user        User          @relation(fields: [userId], references: [id])
+  workoutItem WorkoutItem[]
+
+  @@index([name], type: BTree)
+}
+
+model WorkoutItem {
+  id         String @id @default(uuid())
+  set_number Int
+  reps       Int
+  weight     Float
+  workoutId  String
+  exerciseId String
+
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  workout  Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+
+  @@map("Workout_item")
+}
+
+model Exercise {
+  id          String @id @default(uuid())
+  name        String @db.VarChar(100)
+  description String @db.VarChar(255)
+  gif_url     String
+  muscleId    String
+
+  exercisePr  ExercisePr[]
+  workoutItem WorkoutItem[]
+  muscle      Muscle        @relation(fields: [muscleId], references: [id])
+
+  @@index([name], type: BTree)
+}
+
+model Muscle {
+  id          String     @id @default(uuid())
+  name        String     @db.VarChar(20)
+  picture_url String
+  exercise    Exercise[]
+}
+
+model Logs {
+  id          String   @id @default(uuid())
+  message     String
+  requestorId String
+  timestamp   DateTime
+  operation   String?
 }
 
 model PerformedWorkout {
@@ -18,21 +103,24 @@ model PerformedWorkout {
 }
 
 model PerformedExercise {
-  id                 String           @id @default(uuid())
-  exerciseId         String           @map("exercise_id")
-  performedWorkoutId String           @map("performed_workout_id")
-  setNumber          Int              @map("set_number")
+  id                 String  @id @default(uuid())
+  exerciseId         String  @map("exercise_id")
+  performedWorkoutId String  @map("performed_workout_id")
+  setNumber          Int     @map("set_number")
   reps               Int
   weight             Float
-  done               Boolean          @default(false)
-  performedWorkout   PerformedWorkout @relation(fields: [performedWorkoutId], references: [id])
+  done               Boolean @default(false)
+
+  performedWorkout PerformedWorkout @relation(fields: [performedWorkoutId], references: [id])
 }
 
 model ExercisePr {
   id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  exerciseId String   @map("exercise_id")
   reps       Int
   weight     Float
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp()
+  userId     String   @map("user_id")
+  exerciseId String   @map("exercise_id")
+
+  exercise Exercise @relation(fields: [exerciseId], references: [id])
 }

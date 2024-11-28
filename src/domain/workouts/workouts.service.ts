@@ -14,7 +14,6 @@ export class WorkoutsService {
 
     const spentMinutes = differenceInMilliseconds / (1000 * 60)
 
-    console.log(savePerformedWorkout)
     this.prismaService.$transaction(async (prisma) => {
       const exercisesToCreate = this.parseWorkoutSets(savePerformedWorkout.exercises)
 

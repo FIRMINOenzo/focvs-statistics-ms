@@ -1,7 +1,9 @@
-import { IsNotEmpty, IsNumber } from 'class-validator'
+import { Type } from 'class-transformer'
+import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator'
 
 export class GetWorkoutsBetweenDates {
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   days: number
 }

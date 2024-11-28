@@ -23,6 +23,7 @@ export class StatisticsController {
     @Query() q: GetWorkoutsBetweenDates
   ) {
     try {
+      console.log(q)
       return await this.service.getUserWorkoutsBetweenDates(id, q.days)
     } catch (_) {
       const pastDate = new Date()

@@ -45,9 +45,9 @@ export class StatisticsService {
     `
 
     return workoutsByMonth.map((workout) => {
-      const [year, month] = workout.month.split('-')
+      const [_, month] = workout.month.split('-')
       return {
-        label: `${MonthHandler.instance.getMonth(Number(month))} ${year}`,
+        label: MonthHandler.instance.getMonth(Number(month)),
         value: Number(workout.count)
       }
     })
@@ -95,11 +95,20 @@ export class StatisticsService {
             exerciseId: pr.exerciseId,
             createdAt: { lt: pr.createdAt }
           },
+          include: {
+            exercise: {
+              select: {
+                id: true,
+                gif_url: true,
+                name: true
+              }
+            }
+          },
           orderBy: { createdAt: 'desc' }
         })
 
         return {
-          exerciseId: pr.exerciseId,
+          exercise: oldPr.exercise,
           pr: { reps: pr.reps, weight: pr.weight },
           oldPr: { reps: oldPr.reps, weight: oldPr.weight }
         }
@@ -147,9 +156,9 @@ export class StatisticsService {
       }
 
       return volumeByMonth.map((data) => {
-        const [year, month] = data.year_month.split('-')
+        const [_, month] = data.year_month.split('-')
         return {
-          label: `${MonthHandler.instance.getMonth(Number(month))} ${year}`,
+          label: MonthHandler.instance.getMonth(Number(month)),
           volume: data.volume
         }
       })
