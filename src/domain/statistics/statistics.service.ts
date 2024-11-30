@@ -220,7 +220,7 @@ export class StatisticsService {
 
           return {
             exercise: oldPr?.exercise,
-            pr: { reps: oldPr.reps, weight: oldPr.weight },
+            pr: { reps: oldPr?.reps, weight: oldPr?.weight },
             oldPr: { reps: pr?.reps, weight: pr?.weight }
           }
         })

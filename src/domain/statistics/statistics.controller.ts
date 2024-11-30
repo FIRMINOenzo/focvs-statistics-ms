@@ -60,6 +60,6 @@ export class StatisticsController {
   async exercisesWithImprovements(@AuthUser() { id }: JwtPayloadDTO) {
     const res = await this.service.exercisesWithImprovements(id)
 
-    return res.slice(0, 3)
+    return res
   }
 }
