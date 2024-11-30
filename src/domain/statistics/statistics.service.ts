@@ -23,7 +23,7 @@ export class StatisticsService {
     const endOfDay = new Date(date)
     endOfDay.setHours(23, 59, 59, 999)
 
-    const performedWorkout = await this.repo.performedWorkout.findFirst({
+    const performedWorkoutList = await this.repo.performedWorkout.findMany({
       where: {
         performedAt: {
           gte: startOfDay,
@@ -32,6 +32,8 @@ export class StatisticsService {
         userId
       }
     })
+
+    const performedWorkout = performedWorkoutList[performedWorkoutList.length - 1]
 
     const workout = await this.repo.workout.findFirst({
       where: { id: performedWorkout.workoutId, userId },
