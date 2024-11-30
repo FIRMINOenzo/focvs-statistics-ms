@@ -17,21 +17,19 @@ export class StatisticsService {
   ) {}
 
   async getPerformedWorkout(userId: string, date: string) {
+    console.log(date)
     const startOfDay = new Date(date)
     startOfDay.setHours(0, 0, 0, 0)
 
     const endOfDay = new Date(date)
     endOfDay.setHours(23, 59, 59, 999)
 
-    const performedWorkoutList = await this.repo.performedWorkout.findMany({
-      where: {
-        performedAt: {
-          gte: startOfDay,
-          lte: endOfDay
-        },
-        userId
-      }
-    })
+    const performedWorkoutList = await this.repo.$queryRaw<Array<PerformedWorkout>>`
+      SELECT *
+      FROM "PerformedWorkout" p
+      WHERE p.performed_at::DATE = to_date(${date}, 'YYYY-MM-DD')
+      AND user_id = ${userId}
+  `
 
     const performedWorkout = performedWorkoutList[performedWorkoutList.length - 1]
 
