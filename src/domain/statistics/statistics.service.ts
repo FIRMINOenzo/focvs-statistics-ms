@@ -17,7 +17,6 @@ export class StatisticsService {
   ) {}
 
   async getPerformedWorkout(userId: string, date: string) {
-    console.log(date)
     const startOfDay = new Date(date)
     startOfDay.setHours(0, 0, 0, 0)
 
@@ -191,42 +190,46 @@ export class StatisticsService {
   }
 
   async exercisesWithImprovements(userId: string): Promise<Array<ExerciseImprovementDTO>> {
-    const latestPRs = await this.prismaService.exercisePr.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      distinct: ['exerciseId'],
-      take: 4
-    })
-
-    const exercisesWithProgress: ExerciseImprovementDTO[] = await Promise.all(
-      latestPRs.map(async (pr) => {
-        const oldPr = await this.prismaService.exercisePr.findFirst({
-          where: {
-            userId,
-            exerciseId: pr.exerciseId,
-            createdAt: { lt: pr.createdAt }
-          },
-          include: {
-            exercise: {
-              select: {
-                id: true,
-                gif_url: true,
-                name: true
-              }
-            }
-          },
-          orderBy: { createdAt: 'desc' }
-        })
-
-        return {
-          exercise: oldPr.exercise,
-          pr: { reps: pr.reps, weight: pr.weight },
-          oldPr: { reps: oldPr.reps, weight: oldPr.weight }
-        }
+    try {
+      const latestPRs = await this.prismaService.exercisePr.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        distinct: ['exerciseId'],
+        take: 4
       })
-    )
 
-    return exercisesWithProgress
+      const exercisesWithProgress: ExerciseImprovementDTO[] = await Promise.all(
+        latestPRs.map(async (pr) => {
+          const oldPr = await this.prismaService.exercisePr.findFirst({
+            where: {
+              userId,
+              exerciseId: pr.exerciseId,
+              createdAt: { lt: pr.createdAt }
+            },
+            include: {
+              exercise: {
+                select: {
+                  id: true,
+                  gif_url: true,
+                  name: true
+                }
+              }
+            },
+            orderBy: { createdAt: 'desc' }
+          })
+
+          return {
+            exercise: oldPr?.exercise,
+            pr: { reps: oldPr.reps, weight: oldPr.weight },
+            oldPr: { reps: pr?.reps, weight: pr?.weight }
+          }
+        })
+      )
+
+      return exercisesWithProgress
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   async getUserEvolution(userId: string) {

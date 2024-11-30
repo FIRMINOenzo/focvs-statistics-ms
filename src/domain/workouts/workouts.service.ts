@@ -93,14 +93,15 @@ export class WorkoutsService {
     })
 
     if (!existingPR) {
-      this.prismaService.exercisePr.create({
+      await this.prismaService.exercisePr.create({
         data: { userId, exerciseId, reps, weight }
       })
+
       return
     }
 
     if (this.isNewPersonalRecord(existingPR, weight, reps)) {
-      this.prismaService.exercisePr.create({
+      await this.prismaService.exercisePr.create({
         data: { userId, exerciseId, reps, weight }
       })
     }

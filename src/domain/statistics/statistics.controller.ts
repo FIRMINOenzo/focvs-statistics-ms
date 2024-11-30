@@ -58,6 +58,8 @@ export class StatisticsController {
 
   @Get('last-improvements')
   async exercisesWithImprovements(@AuthUser() { id }: JwtPayloadDTO) {
-    return await this.service.exercisesWithImprovements(id)
+    const res = await this.service.exercisesWithImprovements(id)
+
+    return res.slice(0, 3)
   }
 }
