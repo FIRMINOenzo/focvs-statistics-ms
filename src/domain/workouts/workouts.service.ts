@@ -21,6 +21,7 @@ export class WorkoutsService {
         data: {
           userId: userId,
           name: name,
+          workoutId: savePerformedWorkout.id,
           performedAt: new Date(info.startedAt).toISOString(),
           spentMinutes: spentMinutes,
           performed_exercises: {

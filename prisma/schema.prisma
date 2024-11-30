@@ -43,8 +43,9 @@ model Workout {
   userId      String
   copied      Boolean? @default(false)
 
-  user        User          @relation(fields: [userId], references: [id])
-  workoutItem WorkoutItem[]
+  user             User               @relation(fields: [userId], references: [id])
+  workoutItem      WorkoutItem[]
+  performedWorkout PerformedWorkout[]
 
   @@index([name], type: BTree)
 }
@@ -70,9 +71,10 @@ model Exercise {
   gif_url     String
   muscleId    String
 
-  exercisePr  ExercisePr[]
-  workoutItem WorkoutItem[]
-  muscle      Muscle        @relation(fields: [muscleId], references: [id])
+  exercisePr        ExercisePr[]
+  performedExercise PerformedExercise[]
+  workoutItem       WorkoutItem[]
+  muscle            Muscle              @relation(fields: [muscleId], references: [id])
 
   @@index([name], type: BTree)
 }
@@ -98,8 +100,10 @@ model PerformedWorkout {
   name         String?  @db.VarChar(255)
   performedAt  DateTime @map("performed_at") @db.Timestamp()
   spentMinutes Int      @map("spent_minutes")
+  workoutId    String?
 
   performed_exercises PerformedExercise[]
+  workout             Workout?            @relation(fields: [workoutId], references: [id])
 }
 
 model PerformedExercise {
@@ -112,6 +116,7 @@ model PerformedExercise {
   done               Boolean @default(false)
 
   performedWorkout PerformedWorkout @relation(fields: [performedWorkoutId], references: [id])
+  exercise         Exercise         @relation(fields: [exerciseId], references: [id])
 }
 
 model ExercisePr {

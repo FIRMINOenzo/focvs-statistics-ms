@@ -1,4 +1,4 @@
-import { Controller, Get, InternalServerErrorException, Query } from '@nestjs/common'
+import { Controller, Get, InternalServerErrorException, Param, Query } from '@nestjs/common'
 import { AuthUser, JwtPayloadDTO } from '@PedroCavallaro/focvs-utils'
 import { StatisticsService } from './statistics.service'
 import { GetWorkoutsBetweenDates } from './dto'
@@ -12,6 +12,13 @@ export class StatisticsController {
     return await this.service.getUserEvolution(id)
   }
 
+  @Get('performed-workout/:date')
+  async getPerformedWorkout(@AuthUser() { id }: JwtPayloadDTO, @Param('date') date: string) {
+    const res = await this.service.getPerformedWorkout(id, date)
+
+    return res
+  }
+
   @Get('workouts')
   async loadAllWorkouts(@AuthUser() { id }: JwtPayloadDTO) {
     return await this.service.loadAllWorkouts(id)
@@ -23,7 +30,6 @@ export class StatisticsController {
     @Query() q: GetWorkoutsBetweenDates
   ) {
     try {
-      console.log(q)
       return await this.service.getUserWorkoutsBetweenDates(id, q.days)
     } catch (_) {
       const pastDate = new Date()

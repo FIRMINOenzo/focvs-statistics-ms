@@ -1,23 +1,134 @@
 import { Injectable } from '@nestjs/common'
-
-import { PerformedWorkout } from '@prisma/client'
-
+import { PerformedExercise, PerformedWorkout } from '@prisma/client'
 import { PrismaService } from '@/config/db'
-
 import { MonthHandler } from '@/shared/date/month.handler'
-
 import { HoursSpentDTO, PerformedWorkoutsInDTO } from './dto'
 import { ExerciseImprovementDTO } from './dto/exercise-improvement.dto'
 import { WorkoutsService } from '../workouts'
-
 import { TimeHandler } from './helpers/time'
+import { PrismaWorkoutDTO, WorkoutResponseDTO } from './dto/workout-response.dto'
 
 @Injectable()
 export class StatisticsService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly workoutsService: WorkoutsService
+    private readonly workoutsService: WorkoutsService,
+    private readonly repo: PrismaService
   ) {}
+
+  async getPerformedWorkout(userId: string, date: string) {
+    const startOfDay = new Date(date)
+    startOfDay.setHours(0, 0, 0, 0)
+
+    const endOfDay = new Date(date)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    const performedWorkout = await this.repo.performedWorkout.findFirst({
+      where: {
+        performedAt: {
+          gte: startOfDay,
+          lte: endOfDay
+        },
+        userId
+      }
+    })
+
+    const workout = await this.repo.workout.findFirst({
+      where: { id: performedWorkout.workoutId, userId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image_url: true
+          }
+        }
+      }
+    })
+
+    const performedExercises = await this.repo.performedExercise.findMany({
+      where: {
+        performedWorkout: {
+          id: performedWorkout.id
+        }
+      },
+      include: {
+        exercise: {
+          select: {
+            gif_url: true,
+            name: true
+          }
+        }
+      }
+    })
+
+    return this.parseWorkoutReponse(workout, performedExercises, performedWorkout)
+  }
+
+  private parseWorkoutReponse(
+    workout: PrismaWorkoutDTO,
+    performedExercises: Array<PerformedExercise & { exercise: { gif_url: string; name: string } }>,
+    performedWorkout: PerformedWorkout
+  ): WorkoutResponseDTO {
+    const exercises: WorkoutResponseDTO['exercises'] = []
+
+    const buildedExercises: Record<string, number> = {}
+
+    if (!workout) {
+      return {} as WorkoutResponseDTO
+    }
+
+    if (performedExercises.length === 0) {
+      return {
+        ...workout,
+        performedAt: performedWorkout.performedAt,
+        spentMinutes: performedWorkout.spentMinutes,
+        exerciseAmount: 0,
+        exercises: []
+      }
+    }
+
+    let exerciseAmount = 0
+
+    for (const item of performedExercises) {
+      if (buildedExercises[item.exerciseId]) {
+        continue
+      }
+
+      exerciseAmount++
+
+      const relatedItems = performedExercises.filter((i) => i.exerciseId === item.exerciseId)
+
+      const sets = []
+
+      relatedItems.map((set) =>
+        sets.push({
+          id: set.id,
+          set_number: set.setNumber,
+          done: set.done,
+          reps: set.reps,
+          weight: set.weight
+        })
+      )
+
+      exercises.push({
+        id: item.exerciseId,
+        gif_url: item.exercise.gif_url,
+        name: item.exercise.name,
+        sets
+      })
+
+      buildedExercises[item.exerciseId] = 1
+    }
+
+    return {
+      ...workout,
+      performedAt: performedWorkout.performedAt,
+      spentMinutes: performedWorkout.spentMinutes,
+      exercises,
+      exerciseAmount
+    }
+  }
 
   async loadAllWorkouts(userId: string) {
     const workouts = await this.workoutsService.findAll(userId)
